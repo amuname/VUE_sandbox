@@ -9,6 +9,8 @@ data:function(){
 		user_text:'',
 		search_result:[],
 		search_result_show:false,
+		clicked_search_result:0,
+		ref_id:()=>new Date.valueOf(),
 	}
 },
 created:function () {
@@ -21,6 +23,7 @@ methods:{
 		this.user_list.push(item)
 		this.user_text=''
 		this.search_result = []
+		this.clicked_search_result=0
 	},
 	remove_from_list:function(list_id){
 		this.user_list = this.user_list.filter(elem=>elem.id!=list_id)
@@ -33,6 +36,15 @@ methods:{
 			this.search_result = s_list.filter(
 				elem=>elem.text.startsWith(this.user_text) 
 				) 
+			let id_arr=[]
+			let arr=[]
+			for(let item of this.user_list) id_arr.push(item.id)
+			for(let i=0;i<this.search_result.length;i++){
+				if ( !id_arr.includes(this.search_result[i].id) ) arr.push(this.search_result[i])
+			}
+			this.search_result=arr
+
+
 			if(this.search_result.length>0) this.search_result_show = true
 
 
@@ -41,14 +53,18 @@ methods:{
 		}
 	},
 	choosen_search_result:function (item) {
+		this.clicked_search_result = item.id
 		this.user_text=item.text
 		this.search_result_show = false
 	},
+	focus_input:function () {
+      this.$refs.search_focus.focus();
+    },
 },
 props:['title'],
 template:`
 <div>
-	<p> {{ title }} </p>
+	<p v-bind:title="title"> {{ title }} </p>
 	<ol>
 		<li v-for="item in user_list" v-bind:key="item.id">
 		<span> {{ item.text }} 
@@ -59,18 +75,21 @@ template:`
 	</ol>
 	<form v-on:submit="(e)=>{
 	e.preventDefault()
-	add_to_list({id: new Date().valueOf(),text:user_text})
+	add_to_list({id: clicked_search_result || new Date().valueOf(),text:user_text})
 	}
 	">
-		<input v-model="user_text" v-on:input="show_result" type="text"/>
+		<input ref="search_focus" v-model="user_text" v-on:input="show_result" type="text"/>
 		<ul v-if="search_result_show">
 			<li v-for="item in search_result" v-bind:key="item.id" v-on:click="
-			choosen_search_result(item)
+			()=>{
+				choosen_search_result(item)
+				focus_input()
+			}
 			">
 			 {{item.text}} 
 			</li>
 		</ul>
-		<button v-if="user_text!=''""
+		<button v-if="user_text!=''"
 		> Add to List "{{user_text}}" </button>
 	</form>
 </div>
